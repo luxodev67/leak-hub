@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeakHub — Recherche</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #38bdf8;
+  --blue-dim: rgba(56,189,248,0.12);
+  --blue-border: rgba(56,189,248,0.25);
+  --bg: #050810;
+  --bg2: #070b14;
+  --bg3: #0a0f1e;
+  --card: #080d1a;
+  --card2: #0c1220;
+  --border: rgba(56,189,248,0.08);
+  --border-strong: rgba(56,189,248,0.18);
+  --text: #ffffff;
+  --text-muted: rgba(255,255,255,0.45);
+  --text-dim: rgba(255,255,255,0.65);
+  --mono: 'Space Mono', monospace;
+  --sans: 'Inter', sans-serif;
+  --green: #22c55e;
+  --yellow: #fbbf24;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden;min-height:100vh}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:3px}
+
+/* ── TOP BAR ── */
+.top-bar {
+  position: fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 28px; height:58px;
+  background:rgba(5,8,16,0.97); backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+}
+.top-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.top-logo img{width:26px;height:26px;border-radius:6px}
+.top-logo-text{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.top-logo-text em{color:var(--blue);font-style:normal}
+
+.top-tabs{display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:9px;padding:3px}
+.top-tab{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;border:none;background:transparent;font-family:var(--sans);transition:all .15s}
+.top-tab:hover{color:var(--text)}
+.top-tab.active{background:var(--blue-dim);color:var(--blue);border:none}
+
+.top-right{display:flex;align-items:center;gap:10px}
+.user-chip{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--card);border:1px solid var(--border-strong);border-radius:8px;font-size:12px;cursor:pointer;transition:border-color .2s}
+.user-chip:hover{border-color:var(--blue-border)}
+.user-avatar{width:22px;height:22px;border-radius:50%;background:var(--blue-dim);border:1px solid var(--blue-border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--blue)}
+.user-name{color:var(--text-dim);font-weight:500}
+.plan-chip{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);background:var(--blue-dim);border:1px solid var(--blue-border);padding:3px 8px;border-radius:5px}
+.search-counter{display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:var(--text-muted);padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,.02)}
+.search-counter .num{color:var(--blue);font-weight:700;font-size:13px}
+.logout-btn{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;color:var(--text-muted);border:1px solid var(--border);background:transparent;cursor:pointer;font-family:var(--sans);transition:all .2s}
+.logout-btn:hover{color:var(--text);border-color:var(--border-strong)}
+
+/* ── LAYOUT ── */
+.dash-wrap{display:flex;min-height:100vh;padding-top:58px}
+
+/* ── SIDEBAR ── */
+.sidebar{width:210px;min-height:calc(100vh - 58px);background:var(--bg2);border-right:1px solid var(--border);padding:16px 10px;position:fixed;top:58px;left:0;bottom:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.sb-section-lbl{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;padding:10px 10px 4px}
+.sb-btn{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:7px;border:1px solid transparent;cursor:pointer;transition:all .15s;background:transparent;width:100%;font-family:var(--sans)}
+.sb-btn:hover{background:rgba(56,189,248,.04);border-color:var(--border)}
+.sb-btn.active{background:rgba(56,189,248,.08);border-color:var(--blue-border)}
+.sb-btn-left{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text-muted)}
+.sb-btn.active .sb-btn-left{color:var(--text)}
+.sb-icon{font-size:13px;width:18px;text-align:center}
+.sb-count{font-size:10px;font-family:var(--mono);color:var(--text-muted);background:rgba(255,255,255,.05);padding:1px 5px;border-radius:3px}
+.sb-btn.active .sb-count{color:var(--blue);background:var(--blue-dim)}
+.sb-spacer{flex:1}
+.sb-upgrade{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--blue-dim);border:1px solid var(--blue-border);border-radius:8px;font-size:12px;font-weight:600;color:var(--blue);text-decoration:none;transition:opacity .2s;margin-top:8px}
+.sb-upgrade:hover{opacity:.8}
+
+/* ── MAIN ── */
+.dash-main{flex:1;margin-left:210px;padding:24px 28px;max-width:calc(100% - 210px)}
+
+/* ── STATS ROW ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;transition:border-color .2s}
+.stat-card:hover{border-color:var(--blue-border)}
+.stat-icon-wrap{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.stat-icon-wrap.blue{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2)}
+.stat-icon-wrap.green{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2)}
+.stat-icon-wrap.purple{background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.2)}
+.stat-icon-wrap.yellow{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.2)}
+.stat-label{font-size:11px;color:var(--text-muted);margin-bottom:3px;font-weight:500}
+.stat-value{font-size:20px;font-weight:800;letter-spacing:-.03em;font-family:var(--mono)}
+.stat-value.blue{color:var(--blue)}.stat-value.green{color:var(--green)}.stat-value.purple{color:#a855f7}.stat-value.yellow{color:var(--yellow)}
+
+/* ── TAB SWITCHER ── */
+.content-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px}
+.ctab{padding:10px 20px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border:none;background:transparent;font-family:var(--sans);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;display:flex;align-items:center;gap:7px}
+.ctab:hover{color:var(--text)}
+.ctab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.ctab-dot{width:6px;height:6px;border-radius:50%}
+
+/* ── SEARCH PANEL ── */
+.search-panel-wrap{display:block}
+
+/* Section header */
+.section-header{text-align:center;margin-bottom:24px}
+.section-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;background:rgba(56,189,248,.07);border:1px solid var(--blue-border);border-radius:100px;font-size:11px;font-weight:600;color:var(--blue);letter-spacing:.05em;text-transform:uppercase;margin-bottom:14px}
+.section-title{font-size:26px;font-weight:800;letter-spacing:-.03em;margin-bottom:6px}
+.section-sub{font-size:13px;color:var(--text-muted);line-height:1.6}
+
+/* ── CRITERIA CARD ── */
+.criteria-card{background:var(--card);border:1px solid var(--border-strong);border-radius:14px;overflow:hidden;margin-bottom:16px}
+.criteria-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:rgba(56,189,248,.03)}
+.criteria-header-left{display:flex;align-items:center;gap:10px}
+.criteria-icon{width:28px;height:28px;border-radius:7px;background:var(--blue-dim);border:1px solid var(--blue-border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--blue)}
+.criteria-title{font-size:13px;font-weight:600;color:var(--text)}
+.criteria-subtitle{font-size:11px;color:var(--text-muted);margin-top:1px}
+.criteria-reset{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer;border:none;background:transparent;font-family:var(--sans);transition:color .2s;padding:4px 8px;border-radius:6px}
+.criteria-reset:hover{color:var(--text);background:rgba(255,255,255,.04)}
+
+/* Criterion row */
+.criterion-row{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+.criterion-row:last-child{border-bottom:none}
+.crit-icon{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border-strong);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+.crit-body{flex:1;min-width:0}
+.crit-label{font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.crit-label-text{display:flex;align-items:center;gap:6px}
+.crit-type-badge{font-size:10px;font-weight:600;color:var(--text-muted);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:2px 7px;border-radius:4px;font-family:var(--mono)}
+.crit-remove{width:20px;height:20px;border-radius:4px;background:transparent;border:1px solid transparent;cursor:pointer;font-size:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:var(--sans)}
+.crit-remove:hover{background:rgba(248,113,113,.1);border-color:rgba(248,113,113,.3);color:#fca5a5}
+.crit-input{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border-strong);border-radius:8px;padding:10px 14px;font-size:14px;font-weight:500;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s,box-shadow .2s;letter-spacing:.01em}
+.crit-input:focus{border-color:var(--blue-border);box-shadow:0 0 0 3px rgba(56,189,248,.08)}
+.crit-input::placeholder{color:rgba(255,255,255,.15);font-weight:400}
+
+/* ADD CRITERION */
+.add-criterion-wrap{padding:14px 18px}
+.add-criterion-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;border:1px dashed var(--border-strong);background:transparent;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;font-family:var(--sans);transition:all .2s}
+.add-criterion-btn:hover{border-color:var(--blue-border);color:var(--blue);background:var(--blue-dim)}
+
+/* CRITERION PICKER */
+.crit-picker{display:none;background:var(--card2);border:1px solid var(--border-strong);border-radius:10px;padding:12px;margin-top:8px;grid-template-columns:repeat(3,1fr);gap:6px}
+.crit-picker.open{display:grid}
+.crit-picker-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:7px;border:1px solid transparent;cursor:pointer;font-size:12px;font-weight:500;color:var(--text-muted);background:rgba(255,255,255,.02);transition:all .15s}
+.crit-picker-item:hover{border-color:var(--blue-border);color:var(--text);background:var(--blue-dim)}
+.crit-picker-item.disabled{opacity:.35;cursor:not-allowed}
+.crit-picker-item.disabled:hover{border-color:transparent;background:rgba(255,255,255,.02);color:var(--text-muted)}
+.crit-picker-icon{font-size:14px}
+
+/* API SELECTOR */
+.api-selector-card{background:var(--card);border:1px solid var(--border-strong);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.api-selector-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.api-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:6px}
+.api-pill{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,.02);cursor:pointer;font-size:12px;font-family:var(--mono);color:var(--text-muted);transition:all .15s}
+.api-pill:hover{border-color:var(--blue-border);color:var(--text-dim)}
+.api-pill.selected{border-color:var(--blue-border);background:var(--blue-dim);color:var(--blue)}
+.api-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* LAUNCH BUTTON */
+.launch-btn{width:100%;padding:14px;background:var(--blue);border:none;border-radius:12px;color:#050810;font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;transition:all .2s;box-shadow:0 0 24px rgba(56,189,248,.2);display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:-.01em}
+.launch-btn:hover{opacity:.88;box-shadow:0 0 36px rgba(56,189,248,.35);transform:translateY(-1px)}
+.launch-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.launch-btn:active{transform:translateY(0)}
+
+/* LIMIT WARN */
+.limit-warn{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);border-radius:10px;font-size:13px;color:#fde68a;margin-bottom:16px}
+.limit-warn a{color:var(--blue);text-decoration:none;font-weight:600;font-size:12px}
+
+/* ── LOADING ── */
+.loading-area{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:220px;gap:16px;background:var(--card);border:1px solid var(--border);border-radius:14px;margin-top:16px}
+.loading-spinner{width:28px;height:28px;border:2px solid rgba(56,189,248,.2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+.loading-msg{font-size:12px;color:var(--text-muted);font-family:var(--mono)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── RESULTS ── */
+.results-wrap{display:none;margin-top:16px;animation:fadeUp .3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.results-top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.results-meta{display:flex;align-items:center;gap:10px}
+.results-api-tag{font-size:12px;font-weight:600;font-family:var(--mono);color:var(--blue);background:var(--blue-dim);border:1px solid var(--blue-border);padding:4px 10px;border-radius:6px}
+.results-time{font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+.results-found{font-size:12px;font-family:var(--mono);color:var(--text-muted)}
+.results-found .num{color:var(--green);font-weight:700;font-size:13px}
+.results-actions{display:flex;gap:6px}
+.act-btn{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;color:var(--text-muted);background:rgba(255,255,255,.04);border:1px solid var(--border);cursor:pointer;font-family:var(--sans);transition:all .2s}
+.act-btn:hover{color:var(--text);border-color:var(--blue-border);background:var(--blue-dim)}
+
+/* Result entries */
+.result-entries{display:flex;flex-direction:column;gap:10px}
+
+.result-entry{background:var(--card);border:1px solid var(--border-strong);border-radius:12px;overflow:hidden;transition:border-color .2s}
+.result-entry:hover{border-color:var(--blue-border)}
+
+.entry-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--border);background:rgba(56,189,248,.025)}
+.entry-index{font-size:10px;font-family:var(--mono);color:var(--text-muted);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:4px}
+.entry-source{font-size:11px;font-family:var(--mono);color:var(--blue)}
+.entry-date{font-size:11px;color:var(--text-muted);font-family:var(--mono)}
+
+.entry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.entry-field{padding:10px 16px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.entry-field:last-child{border-right:none}
+.field-key{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;font-family:var(--mono)}
+.field-val{font-size:13px;color:var(--text);font-family:var(--mono);word-break:break-all;line-height:1.4}
+.field-val.highlight{color:#fde68a}
+.field-val.green{color:#4ade80}
+.field-val.blue{color:var(--blue)}
+.field-val.muted{color:var(--text-muted)}
+.field-val.masked{letter-spacing:.12em;color:var(--text-dim)}
+
+/* No results */
+.no-results{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;text-align:center}
+.no-results-icon{font-size:24px;color:var(--text-muted)}
+.no-results-title{font-size:14px;font-weight:600;color:var(--text-muted)}
+.no-results-sub{font-size:12px;color:var(--text-muted)}
+
+/* ── HISTORY PANEL ── */
+.history-panel{display:none}
+.history-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;gap:12px;text-align:center;color:var(--text-muted)}
+.history-empty-icon{font-size:28px}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s}
+.history-item:hover{border-color:var(--blue-border);background:rgba(56,189,248,.03)}
+.hi-api{font-size:11px;font-family:var(--mono);color:var(--blue);background:var(--blue-dim);border:1px solid var(--blue-border);padding:2px 8px;border-radius:4px;flex-shrink:0}
+.hi-query{font-size:13px;color:var(--text-dim);flex:1;font-family:var(--mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hi-time{font-size:11px;color:var(--text-muted);flex-shrink:0}
+.hi-count{font-size:11px;color:var(--green);font-family:var(--mono);flex-shrink:0}
+
+@media(max-width:900px){.sidebar{display:none}.dash-main{margin-left:0;max-width:100%;padding:16px}.top-tabs{display:none}.stats-row{grid-template-columns:repeat(2,1fr)}.crit-picker{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <a href="index.html" class="top-logo">
+    <img src="https://media.discordapp.net/attachments/1387034677688406090/1482459262134255757/LeakHub_Logo.png?ex=69b70746&is=69b5b5c6&hm=edc2f3c5b8e6b2d955d665c7490c906f5b121790db661d278c19854b9096c6eb&=&format=webp&quality=lossless&width=350&height=350" alt="">
+    <span class="top-logo-text">Leak<em>Hub</em></span>
+  </a>
+
+  <div class="top-tabs">
+    <button class="top-tab active" onclick="showPanel('search',this)">Recherche</button>
+    <button class="top-tab" onclick="showPanel('history',this)">Historique</button>
+  </div>
+
+  <div class="top-right">
+    <div class="search-counter">
+      <span class="num" id="searchLeft">—</span>
+      <span>/</span>
+      <span id="searchMax">—</span>
+      <span style="font-size:10px;color:var(--text-muted)">rech.</span>
+    </div>
+    <div class="plan-chip" id="planChip">—</div>
+    <div class="user-chip" id="userChip">
+      <div class="user-avatar" id="userAvatar">?</div>
+      <span class="user-name" id="userName">—</span>
+    </div>
+    <button class="logout-btn" onclick="logout()">Déconnexion</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="dash-wrap">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section-lbl">Catégories</div>
+    <button class="sb-btn active" onclick="selectCat('breach',this)">
+      <span class="sb-btn-left"><span class="sb-icon">◈</span>Breach Data</span>
+      <span class="sb-count">16</span>
+    </button>
+    <button class="sb-btn" onclick="selectCat('stealer',this)">
+      <span class="sb-btn-left"><span class="sb-icon">◉</span>Stealer Logs</span>
+      <span class="sb-count">9</span>
+    </button>
+    <button class="sb-btn" onclick="selectCat('osint',this)">
+      <span class="sb-btn-left"><span class="sb-icon">◎</span>OSINT</span>
+      <span class="sb-count">14</span>
+    </button>
+    <button class="sb-btn" onclick="selectCat('discord',this)">
+      <span class="sb-btn-left"><span class="sb-icon">◆</span>Discord & Réseaux</span>
+      <span class="sb-count">17</span>
+    </button>
+    <button class="sb-btn" onclick="selectCat('reseau',this)">
+      <span class="sb-btn-left"><span class="sb-icon">⊟</span>Réseau & IP</span>
+      <span class="sb-count">11</span>
+    </button>
+    <button class="sb-btn" onclick="selectCat('gaming',this)">
+      <span class="sb-btn-left"><span class="sb-icon">▣</span>Gaming & Crypto</span>
+      <span class="sb-count">14</span>
+    </button>
+    <button class="sb-btn" onclick="selectCat('special',this)">
+      <span class="sb-btn-left"><span class="sb-icon">◈</span>Spécial</span>
+      <span class="sb-count">4</span>
+    </button>
+
+    <div class="sb-spacer"></div>
+
+    <a href="prices.html" target="_blank" class="sb-upgrade">Mettre à niveau →</a>
+  </div>
+
+  <!-- MAIN -->
+  <div class="dash-main">
+
+    <!-- STATS ROW -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon-wrap blue">◎</div>
+        <div><div class="stat-label">Recherches aujourd'hui</div><div class="stat-value blue" id="statToday">0</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap green">↑</div>
+        <div><div class="stat-label">Recherches totales</div><div class="stat-value green" id="statTotal">0</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap purple">≡</div>
+        <div><div class="stat-label">Lignes indexées</div><div class="stat-value purple">1 963 054 266</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap yellow">◈</div>
+        <div><div class="stat-label">Utilisateurs inscrits</div><div class="stat-value yellow" id="statUsers">—</div></div>
+      </div>
+    </div>
+
+    <!-- CONTENT TABS -->
+    <div class="content-tabs">
+      <button class="ctab active" onclick="showPanel('search',this)">
+        <span class="ctab-dot" style="background:var(--blue)"></span>
+        Recherche Avancée
+      </button>
+      <button class="ctab" onclick="showPanel('history',this)">
+        <span class="ctab-dot" style="background:var(--text-muted)"></span>
+        Historique
+      </button>
+    </div>
+
+    <!-- SEARCH PANEL -->
+    <div id="panelSearch">
+      <div class="section-header">
+        <div class="section-badge">◎ Moteur de recherche</div>
+        <div class="section-title" id="panelTitle">Recherche avancée</div>
+        <div class="section-sub" id="panelSub">Combinez plusieurs critères pour une recherche précise dans notre base de données.</div>
+      </div>
+
+      <div class="limit-warn" id="limitWarn" style="display:none">
+        Il vous reste <strong id="limitLeft">1</strong> recherche(s) aujourd'hui.
+        <a href="prices.html" target="_blank">Passer à Pro — Illimité →</a>
+      </div>
+
+      <!-- CRITERIA CARD -->
+      <div class="criteria-card">
+        <div class="criteria-header">
+          <div class="criteria-header-left">
+            <div class="criteria-icon">≡</div>
+            <div>
+              <div class="criteria-title">Critères de recherche</div>
+              <div class="criteria-subtitle" id="filterCount">1 filtre actif</div>
+            </div>
+          </div>
+          <button class="criteria-reset" onclick="resetCriteria()">↺ Réinitialiser</button>
+        </div>
+
+        <!-- Dynamic criteria rows -->
+        <div id="criteriaRows">
+          <!-- populated by JS -->
+        </div>
+
+        <div class="add-criterion-wrap">
+          <button class="add-criterion-btn" onclick="togglePicker()">+ Ajouter un critère</button>
+          <div class="crit-picker" id="critPicker"></div>
+        </div>
+      </div>
+
+      <!-- API SELECTOR -->
+      <div class="api-selector-card">
+        <div class="api-selector-label">API source — <span id="apiCount">1 sélectionnée</span></div>
+        <div class="api-grid" id="apiGrid"></div>
+      </div>
+
+      <!-- LAUNCH -->
+      <button class="launch-btn" id="launchBtn" onclick="doSearch()">
+        ◎ Lancer la recherche
+      </button>
+
+      <!-- LOADING -->
+      <div class="loading-area" id="loadingArea">
+        <div class="loading-spinner"></div>
+        <div class="loading-msg" id="loadingMsg">Connexion à l'API...</div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="results-wrap" id="resultsWrap">
+        <div class="results-top-bar">
+          <div class="results-meta">
+            <div class="results-api-tag" id="resApiTag">—</div>
+            <div class="results-time" id="resTime">—</div>
+            <div class="results-found"><span class="num" id="resCount">0</span> résultat(s)</div>
+          </div>
+          <div class="results-actions">
+            <button class="act-btn" onclick="copyResults()">Copier</button>
+            <button class="act-btn" onclick="downloadTxt()">Télécharger .txt</button>
+          </div>
+        </div>
+        <div class="result-entries" id="resultEntries"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div id="panelHistory" class="history-panel">
+      <div id="historyContent"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── SESSION CHECK ── */
+let session = JSON.parse(localStorage.getItem('lh_session') || sessionStorage.getItem('lh_session') || 'null');
+if (!session || !session.email) { window.location.href = 'login.html'; }
+
+const planConfig = {
+  free:       { label: 'Free',       searches: 5,        color: '#38bdf8' },
+  starter:    { label: 'Starter',    searches: 200,      color: '#38bdf8' },
+  pro:        { label: 'Pro',        searches: Infinity, color: '#a855f7' },
+  enterprise: { label: 'Enterprise', searches: Infinity, color: '#fbbf24' }
+};
+const pc = planConfig[session.plan] || planConfig.free;
+
+// Init UI with session
+document.getElementById('userAvatar').textContent = (session.firstName || '?')[0].toUpperCase();
+document.getElementById('userName').textContent = session.firstName + ' ' + session.lastName;
+document.getElementById('planChip').textContent = pc.label;
+document.getElementById('planChip').style.color = pc.color;
+
+// Search counter
+const todayKey = 'lh_searches_' + new Date().toDateString();
+let searchesToday = parseInt(localStorage.getItem(todayKey) || '0');
+let totalSearches = parseInt(localStorage.getItem('lh_searches_total') || '0');
+let searchesLeft = pc.searches === Infinity ? Infinity : Math.max(0, pc.searches - searchesToday);
+
+document.getElementById('searchLeft').textContent = pc.searches === Infinity ? '∞' : searchesLeft;
+document.getElementById('searchMax').textContent = pc.searches === Infinity ? '∞' : pc.searches;
+document.getElementById('statToday').textContent = searchesToday;
+document.getElementById('statTotal').textContent = totalSearches.toLocaleString('fr-FR');
+document.getElementById('statUsers').textContent = (JSON.parse(localStorage.getItem('lh_accounts') || '[]').length).toLocaleString('fr-FR');
+
+function updateCounters() {
+  searchesToday++;
+  totalSearches++;
+  localStorage.setItem(todayKey, searchesToday);
+  localStorage.setItem('lh_searches_total', totalSearches);
+  searchesLeft = pc.searches === Infinity ? Infinity : Math.max(0, pc.searches - searchesToday);
+  document.getElementById('searchLeft').textContent = pc.searches === Infinity ? '∞' : searchesLeft;
+  document.getElementById('statToday').textContent = searchesToday;
+  document.getElementById('statTotal').textContent = totalSearches.toLocaleString('fr-FR');
+  if (pc.searches !== Infinity && searchesLeft <= 1) {
+    document.getElementById('limitWarn').style.display = 'flex';
+    document.getElementById('limitLeft').textContent = searchesLeft;
+  }
+}
+
+function logout() {
+  localStorage.removeItem('lh_session');
+  sessionStorage.removeItem('lh_session');
+  window.location.href = 'login.html';
+}
+
+/* ── API DATA ── */
+const apiData = {
+  breach: {
+    title: 'Recherche avancée', sub: 'Combinez plusieurs critères pour une recherche précise dans notre base de données.',
+    color: '#38bdf8', dotColor: '#38bdf8',
+    criteria: [
+      { key: 'email', label: 'Email', icon: '✉', placeholder: 'DUPONT@GMAIL.COM', type: 'Email' },
+      { key: 'username', label: "Nom d'utilisateur", icon: '◎', placeholder: 'dupont92', type: 'String' },
+      { key: 'password', label: 'Mot de passe', icon: '◈', placeholder: '••••••••', type: 'String' },
+      { key: 'hash', label: 'Hash MD5/SHA', icon: '≡', placeholder: '5f4dcc3b5aa765d61d8327deb...', type: 'Hash' },
+      { key: 'phone', label: 'Téléphone', icon: '◉', placeholder: '+33 6 12 34 56 78', type: 'Phone' },
+      { key: 'ip', label: 'Adresse IP', icon: '⊟', placeholder: '192.168.1.1', type: 'IP' },
+    ],
+    apis: ['Snusbase','LeakOsint','LeakCheck V2','BreachLookup','HackCheck','Breach.vip','BreachBase','BreachDirectory','IntelVault','xOsint FR','CamelHub FR','SeekBase FR','See-Know','Netium DB','Inf0sec Leaks','Oathnet Breach']
+  },
+  stealer: {
+    title: 'Stealer Logs', sub: 'Interrogez les journaux de stealers par domaine, URL ou identifiant machine.',
+    color: '#f97316', dotColor: '#f97316',
+    criteria: [
+      { key: 'domain', label: 'Domaine', icon: '⊟', placeholder: 'google.com', type: 'Domain' },
+      { key: 'url', label: 'URL complète', icon: '◈', placeholder: 'https://...', type: 'URL' },
+      { key: 'username', label: "Nom d'utilisateur", icon: '◎', placeholder: 'dupont92', type: 'String' },
+    ],
+    apis: ['LeakSight','Oathnet Stealer','Akula','HudsonRock','Wentyn','Infodra','Netium Stealer','CrowSint MC','OsintCat DB']
+  },
+  osint: {
+    title: 'OSINT', sub: 'Renseignement open source. Recherchez par email, téléphone, nom ou identifiant.',
+    color: '#22c55e', dotColor: '#22c55e',
+    criteria: [
+      { key: 'email', label: 'Email', icon: '✉', placeholder: 'jean@exemple.com', type: 'Email' },
+      { key: 'phone', label: 'Téléphone', icon: '◉', placeholder: '+33 6 12 34 56 78', type: 'Phone' },
+      { key: 'name', label: 'Nom complet', icon: '◎', placeholder: 'Jean Dupont', type: 'Name' },
+    ],
+    apis: ['OsintKit Email','OsintKit Téléphone','OsintKit Nom','Melissa','Truecaller','IntelBase Search','IntelBase NPD','Netium Email','Netium Téléphone','Netium Nom','SEON Email','SEON Téléphone','Indicia Email','Intelbase Unified']
+  },
+  discord: {
+    title: 'Discord & Réseaux sociaux', sub: 'Lookup par user ID Discord, username, ou identifiant de réseau social.',
+    color: '#5865f2', dotColor: '#5865f2',
+    criteria: [
+      { key: 'discord_id', label: 'User ID Discord', icon: '◆', placeholder: '123456789012345678', type: 'ID' },
+      { key: 'username', label: 'Username', icon: '◎', placeholder: 'username#0001', type: 'String' },
+    ],
+    apis: ['Discord Lookup','Discord Stalker','Cord.cat','IntelFetch Discord','IntelBase Discord','Indicia Discord','Breach.rip Discord','Discord→Roblox','Inf0sec Discord','Memory.lol','Reddit','Room101','TikTok Basic','TikTok Full','IntelBase TikTok','Indicia TikTok','Twitter OSINT']
+  },
+  reseau: {
+    title: 'Réseau & IP', sub: 'Analyse réseau. Adresse IP, domaine, numéro de téléphone ou BIN bancaire.',
+    color: '#06b6d4', dotColor: '#06b6d4',
+    criteria: [
+      { key: 'ip', label: 'Adresse IP', icon: '⊟', placeholder: '192.168.1.1', type: 'IP' },
+      { key: 'domain', label: 'Domaine', icon: '◈', placeholder: 'exemple.com', type: 'Domain' },
+      { key: 'phone', label: 'Téléphone', icon: '◉', placeholder: '+33 6 12 34 56 78', type: 'Phone' },
+    ],
+    apis: ['IPinfo','SEON IP','IntelFetch IP','IntelBase IP','Shodan Host','Shodan Search','IntelBase Téléphone','IntelFetch Domaine','WHOIS','BIN Bancaire','Inf0sec HLR']
+  },
+  gaming: {
+    title: 'Gaming & Crypto', sub: 'Recherche par username gaming, wallet crypto, VIN ou identifiant console.',
+    color: '#a855f7', dotColor: '#a855f7',
+    criteria: [
+      { key: 'username', label: 'Username', icon: '▣', placeholder: 'Pseudo_Gaming', type: 'String' },
+      { key: 'wallet', label: 'Wallet crypto', icon: '◈', placeholder: '0x...', type: 'Hash' },
+    ],
+    apis: ['GitHub','IntelFetch GitHub','IntelBase GitHub','IntelBase Minecraft','IntelBase Roblox','Indicia Roblox','Inf0sec CFX','Inf0sec Username','Xbox Lookup','VIN Décodeur','Véhicule Lookup','Bitcoin Wallet','Ethereum Wallet','BINlist']
+  },
+  special: {
+    title: 'Spécial', sub: 'Recherche avancée. Hash, identifiant obscur ou requête Google OSINT.',
+    color: '#38bdf8', dotColor: '#38bdf8',
+    criteria: [
+      { key: 'hash', label: 'Hash / ID', icon: '≡', placeholder: 'hash ou identifiant', type: 'Hash' },
+    ],
+    apis: ['BreachHub Search','IntelFetch FetchBase','IntelBase Doxbin','Google OSINT']
+  }
+};
+
+let currentCat = 'breach';
+let activeCriteria = []; // [{key, label, icon, placeholder, type}]
+let selectedApis = new Set();
+let lastSearchData = null;
+let searchHistory = JSON.parse(localStorage.getItem('lh_history') || '[]');
+
+function selectCat(cat, btn) {
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCat = cat;
+  const d = apiData[cat];
+  document.getElementById('panelTitle').textContent = d.title;
+  document.getElementById('panelSub').textContent = d.sub;
+  activeCriteria = [d.criteria[0]];
+  selectedApis = new Set([d.apis[0]]);
+  renderCriteria();
+  renderApis();
+  hideResults();
+}
+
+/* CRITERIA */
+function renderCriteria() {
+  const container = document.getElementById('criteriaRows');
+  container.innerHTML = activeCriteria.map((c, i) => `
+    <div class="criterion-row" id="crit-row-${i}">
+      <div class="crit-icon">${c.icon}</div>
+      <div class="crit-body">
+        <div class="crit-label">
+          <div class="crit-label-text">
+            ${c.label}
+            <span class="crit-type-badge">${c.type}</span>
+          </div>
+          ${activeCriteria.length > 1 ? `<button class="crit-remove" onclick="removeCriterion(${i})">✕</button>` : ''}
+        </div>
+        <input class="crit-input" id="crit-input-${i}" type="text" placeholder="${c.placeholder}" autocomplete="off">
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('filterCount').textContent = activeCriteria.length + ' filtre' + (activeCriteria.length > 1 ? 's' : '') + ' actif' + (activeCriteria.length > 1 ? 's' : '');
+}
+
+function removeCriterion(i) {
+  activeCriteria.splice(i, 1);
+  renderCriteria();
+}
+
+function resetCriteria() {
+  const d = apiData[currentCat];
+  activeCriteria = [d.criteria[0]];
+  renderCriteria();
+  selectedApis = new Set([d.apis[0]]);
+  renderApis();
+  hideResults();
+}
+
+function togglePicker() {
+  const picker = document.getElementById('critPicker');
+  const d = apiData[currentCat];
+  const activeKeys = new Set(activeCriteria.map(c => c.key));
+  picker.innerHTML = d.criteria.map(c => {
+    const disabled = activeKeys.has(c.key);
+    return `<div class="crit-picker-item ${disabled ? 'disabled' : ''}" onclick="${disabled ? '' : `addCriterion('${c.key}')`}">
+      <span class="crit-picker-icon">${c.icon}</span>
+      ${c.label}
+    </div>`;
+  }).join('');
+  picker.classList.toggle('open');
+}
+
+function addCriterion(key) {
+  const d = apiData[currentCat];
+  const c = d.criteria.find(x => x.key === key);
+  if (c && !activeCriteria.find(a => a.key === key)) {
+    activeCriteria.push(c);
+    renderCriteria();
+    document.getElementById('critPicker').classList.remove('open');
+  }
+}
+
+/* APIS */
+function renderApis() {
+  const d = apiData[currentCat];
+  const grid = document.getElementById('apiGrid');
+  grid.innerHTML = d.apis.map(a => {
+    const sel = selectedApis.has(a);
+    return `<div class="api-pill ${sel ? 'selected' : ''}" onclick="toggleApi('${a}')">
+      <span class="api-dot" style="background:${d.dotColor}"></span>${a}
+    </div>`;
+  }).join('');
+  updateApiCount();
+}
+
+function toggleApi(api) {
+  if (selectedApis.has(api)) {
+    if (selectedApis.size <= 1) return; // at least one
+    selectedApis.delete(api);
+  } else {
+    selectedApis.add(api);
+  }
+  renderApis();
+}
+
+function updateApiCount() {
+  document.getElementById('apiCount').textContent = selectedApis.size + ' sélectionnée' + (selectedApis.size > 1 ? 's' : '');
+}
+
+/* Init */
+selectCat('breach', document.querySelector('.sb-btn'));
+
+/* SEARCH */
+async function doSearch() {
+  if (pc.searches !== Infinity && searchesLeft <= 0) {
+    document.getElementById('limitWarn').style.display = 'flex';
+    return;
+  }
+
+  const inputs = activeCriteria.map((c, i) => ({
+    key: c.key,
+    label: c.label,
+    value: (document.getElementById(`crit-input-${i}`)?.value || '').trim()
+  })).filter(x => x.value);
+
+  if (!inputs.length) {
+    document.getElementById(`crit-input-0`)?.focus();
+    return;
+  }
+
+  // Show loading
+  document.getElementById('launchBtn').disabled = true;
+  document.getElementById('loadingArea').style.display = 'flex';
+  document.getElementById('resultsWrap').style.display = 'none';
+
+  const msgs = [
+    'Connexion à l\'API...',
+    `Interrogation de ${[...selectedApis][0]}...`,
+    'Traitement des données...',
+    'Formatage des résultats...'
+  ];
+  let mi = 0;
+  const msgInterval = setInterval(() => {
+    mi = (mi + 1) % msgs.length;
+    document.getElementById('loadingMsg').textContent = msgs[mi];
+  }, 500);
+
+  await new Promise(r => setTimeout(r, 1600 + Math.random() * 1200));
+  clearInterval(msgInterval);
+
+  document.getElementById('loadingArea').style.display = 'none';
+  document.getElementById('launchBtn').disabled = false;
+
+  const t0 = Date.now();
+  const results = generateResults(inputs, currentCat);
+  const elapsed = ((Date.now() - t0) / 1000 + 0.43).toFixed(2);
+
+  lastSearchData = { inputs, apis: [...selectedApis], results, cat: currentCat, elapsed };
+
+  // Save to history
+  searchHistory.unshift({
+    id: Date.now(),
+    cat: currentCat,
+    query: inputs[0].value,
+    api: [...selectedApis][0],
+    count: results.length,
+    time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  });
+  if (searchHistory.length > 50) searchHistory.pop();
+  localStorage.setItem('lh_history', JSON.stringify(searchHistory));
+
+  updateCounters();
+  renderResults(results, elapsed);
+}
+
+/* MOCK RESULTS GENERATOR */
+function generateResults(inputs, cat) {
+  const count = Math.floor(Math.random() * 4) + 1;
+  const results = [];
+  const mainValue = inputs[0]?.value || '';
+
+  for (let i = 0; i < count; i++) {
+    if (cat === 'breach') {
+      const emailBase = mainValue.includes('@') ? mainValue.split('@')[0] : mainValue;
+      const domains = ['gmail.com','yahoo.fr','hotmail.com','orange.fr','sfr.fr','outlook.com'];
+      results.push({
+        index: i + 1,
+        source: [...selectedApis][0],
+        fields: [
+          { key: 'email', value: `${emailBase}${i > 0 ? i : ''}@${domains[i % domains.length]}`, style: 'highlight' },
+          { key: 'username', value: emailBase + (i > 0 ? `_${i}` : ''), style: '' },
+          { key: 'password', value: `••••••••`, style: 'masked' },
+          { key: 'hash_md5', value: Array.from({length:32},()=>'0123456789abcdef'[Math.floor(Math.random()*16)]).join(''), style: 'muted' },
+          { key: 'database', value: `breach_${2019+i}_db`, style: 'blue' },
+          { key: 'date_breach', value: `${2019+i}-${String(Math.floor(Math.random()*12)+1).padStart(2,'0')}-01`, style: '' },
+          { key: 'ip_address', value: `${Math.floor(Math.random()*255)+1}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*99)+1}`, style: 'muted' },
+          { key: 'country', value: ['FR','BE','CH','CA','LU'][i%5], style: 'green' },
+        ]
+      });
+    } else if (cat === 'osint') {
+      results.push({
+        index: i + 1,
+        source: [...selectedApis][0],
+        fields: [
+          { key: 'query', value: mainValue, style: 'highlight' },
+          { key: 'first_name', value: 'Jean', style: '' },
+          { key: 'last_name', value: mainValue.split('@')[0]?.toUpperCase() || 'DUPONT', style: '' },
+          { key: 'phone', value: `+33 6 ${String(Math.floor(Math.random()*99)).padStart(2,'0')} ${String(Math.floor(Math.random()*99)).padStart(2,'0')} ${String(Math.floor(Math.random()*99)).padStart(2,'0')} ${String(Math.floor(Math.random()*99)).padStart(2,'0')}`, style: 'blue' },
+          { key: 'location', value: ['Paris, FR','Lyon, FR','Marseille, FR','Bordeaux, FR'][i%4], style: 'green' },
+          { key: 'provider', value: ['Orange','SFR','Bouygues','Free'][i%4], style: 'muted' },
+        ]
+      });
+    } else if (cat === 'discord') {
+      results.push({
+        index: i + 1,
+        source: [...selectedApis][0],
+        fields: [
+          { key: 'discord_id', value: mainValue || '1234567890' + i, style: 'highlight' },
+          { key: 'username', value: `user_${mainValue.slice(0,6)||'anon'}#${String(Math.floor(Math.random()*9999)).padStart(4,'0')}`, style: '' },
+          { key: 'created_at', value: `${2019+i}-${String(Math.floor(Math.random()*12)+1).padStart(2,'0')}-01`, style: 'muted' },
+          { key: 'guilds', value: String(Math.floor(Math.random()*80)+5), style: 'green' },
+          { key: 'email', value: mainValue.includes('@') ? mainValue : `linked_account@gmail.com`, style: 'blue' },
+        ]
+      });
+    } else {
+      results.push({
+        index: i + 1,
+        source: [...selectedApis][0],
+        fields: [
+          { key: 'query', value: mainValue, style: 'highlight' },
+          { key: 'api', value: [...selectedApis][0], style: 'blue' },
+          { key: 'result', value: `data_entry_${i+1}`, style: '' },
+          { key: 'status', value: '200 OK', style: 'green' },
+          { key: 'timestamp', value: new Date().toISOString(), style: 'muted' },
+        ]
+      });
+    }
+  }
+  return results;
+}
+
+/* RENDER RESULTS */
+function renderResults(results, elapsed) {
+  const apiLabel = [...selectedApis].join(', ');
+  document.getElementById('resApiTag').textContent = apiLabel;
+  document.getElementById('resTime').textContent = `${elapsed}s`;
+  document.getElementById('resCount').textContent = results.length;
+
+  if (results.length === 0) {
+    document.getElementById('resultEntries').innerHTML = `
+      <div class="no-results">
+        <div class="no-results-icon">◎</div>
+        <div class="no-results-title">Aucun résultat trouvé</div>
+        <div class="no-results-sub">Essayez une autre API ou vérifiez la requête.</div>
+      </div>`;
+  } else {
+    document.getElementById('resultEntries').innerHTML = results.map(r => `
+      <div class="result-entry">
+        <div class="entry-header">
+          <span class="entry-index">#${r.index}</span>
+          <span class="entry-source">${r.source}</span>
+          <span class="entry-date">${new Date().toLocaleDateString('fr-FR')}</span>
+        </div>
+        <div class="entry-grid">
+          ${r.fields.map(f => `
+            <div class="entry-field">
+              <div class="field-key">${f.key}</div>
+              <div class="field-val ${f.style}">${f.value}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('resultsWrap').style.display = 'block';
+}
+
+function hideResults() {
+  document.getElementById('resultsWrap').style.display = 'none';
+  document.getElementById('loadingArea').style.display = 'none';
+}
+
+/* EXPORT */
+function copyResults() {
+  if (!lastSearchData) return;
+  const txt = lastSearchData.results.map(r =>
+    `[#${r.index}] ${r.source}\n` + r.fields.map(f => `  ${f.key}: ${f.value}`).join('\n')
+  ).join('\n\n');
+  navigator.clipboard.writeText(`LeakHub — ${lastSearchData.apis.join(', ')}\nRequête: ${lastSearchData.inputs.map(i => `${i.label}=${i.value}`).join(', ')}\n\n${txt}`);
+  const btn = event.target;
+  btn.textContent = 'Copié !';
+  setTimeout(() => btn.textContent = 'Copier', 1500);
+}
+
+function downloadTxt() {
+  if (!lastSearchData) return;
+  const txt = [
+    `LeakHub — Résultats d'analyse`,
+    `API: ${lastSearchData.apis.join(', ')}`,
+    `Requête: ${lastSearchData.inputs.map(i => `${i.label}=${i.value}`).join(', ')}`,
+    `Date: ${new Date().toLocaleString('fr-FR')}`,
+    `Temps: ${lastSearchData.elapsed}s`,
+    `Résultats: ${lastSearchData.results.length}`,
+    `${'─'.repeat(60)}`,
+    '',
+    ...lastSearchData.results.map(r =>
+      `[ENTRY #${r.index}] — ${r.source}\n` + r.fields.map(f => `  ${f.key.padEnd(14)}: ${f.value}`).join('\n')
+    )
+  ].join('\n');
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `leakhub_${lastSearchData.apis[0].toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Date.now()}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* PANEL SWITCHING */
+function showPanel(panel, btn) {
+  // top tabs
+  document.querySelectorAll('.top-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.ctab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  document.getElementById('panelSearch').style.display = panel === 'search' ? 'block' : 'none';
+  document.getElementById('panelHistory').style.display = panel === 'history' ? 'block' : 'none';
+
+  if (panel === 'history') renderHistory();
+}
+
+/* HISTORY */
+function renderHistory() {
+  const panel = document.getElementById('historyContent');
+  if (!searchHistory.length) {
+    panel.innerHTML = `<div class="history-empty"><div class="history-empty-icon">◎</div><div>Aucune recherche effectuée.</div></div>`;
+    return;
+  }
+  panel.innerHTML = `<div class="history-list">` + searchHistory.map(h => `
+    <div class="history-item" onclick="replaySearch('${h.id}')">
+      <span class="hi-api">${h.api}</span>
+      <span class="hi-query">${h.query}</span>
+      <span class="hi-count">${h.count} résultat(s)</span>
+      <span class="hi-time">${h.time}</span>
+    </div>
+  `).join('') + `</div>`;
+}
+</script>
+</body>
+</html>
