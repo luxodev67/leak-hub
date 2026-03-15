@@ -7,279 +7,167 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --blue: #38bdf8;
-  --blue-dim: rgba(56,189,248,0.12);
-  --blue-border: rgba(56,189,248,0.25);
-  --bg: #050810;
-  --card: #080d1a;
-  --border: rgba(56,189,248,0.08);
-  --border-strong: rgba(56,189,248,0.18);
-  --text: #ffffff;
-  --text-muted: rgba(255,255,255,0.45);
-  --text-dim: rgba(255,255,255,0.65);
-  --mono: 'Space Mono', monospace;
-  --sans: 'Inter', sans-serif;
-}
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 2px; }
+:root{--blue:#38bdf8;--blue-dim:rgba(56,189,248,.12);--blue-border:rgba(56,189,248,.25);--bg:#050810;--card:#080d1a;--border:rgba(56,189,248,.08);--border-strong:rgba(56,189,248,.18);--text:#fff;--text-muted:rgba(255,255,255,.45);--text-dim:rgba(255,255,255,.65);--mono:'Space Mono',monospace;--sans:'Inter',sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px}
+.bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(56,189,248,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.025) 1px,transparent 1px);background-size:80px 80px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 100%);pointer-events:none;z-index:0}
+.bg-glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:500px;background:radial-gradient(ellipse at center,rgba(56,189,248,.05) 0%,transparent 70%);pointer-events:none;z-index:0}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px;background:rgba(5,8,16,.92);backdrop-filter:blur(24px);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo img{width:28px;height:28px;border-radius:6px}
+.nav-logo-text{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.nav-logo-text em{color:var(--blue);font-style:normal}
+.nav-link{font-size:13px;color:var(--text-muted);text-decoration:none;transition:color .2s}
+.nav-link:hover{color:var(--text)}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:90px 24px 40px;position:relative;z-index:1}
+.wrap{width:100%;max-width:400px}
 
-.bg-grid {
-  position: fixed; inset: 0;
-  background-image: linear-gradient(rgba(56,189,248,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.025) 1px, transparent 1px);
-  background-size: 80px 80px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
-  pointer-events: none; z-index: 0;
-}
-.bg-glow {
-  position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
-  width: 800px; height: 500px;
-  background: radial-gradient(ellipse at center, rgba(56,189,248,0.05) 0%, transparent 70%);
-  pointer-events: none; z-index: 0;
-}
+/* SUCCESS BANNER (after register) */
+.success-banner{display:none;align-items:center;gap:10px;padding:12px 16px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:10px;margin-bottom:20px;font-size:13px;color:#4ade80;animation:fadeUp .4s ease both}
 
-nav {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 40px; height: 60px;
-  background: rgba(5,8,16,0.92); backdrop-filter: blur(24px);
-  border-bottom: 1px solid var(--border);
-}
-.nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-.nav-logo img { width: 28px; height: 28px; border-radius: 6px; }
-.nav-logo-text { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
-.nav-logo-text em { color: var(--blue); font-style: normal; }
-.nav-link { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
-.nav-link:hover { color: var(--text); }
-
-main {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 90px 24px 40px; position: relative; z-index: 1;
-}
-
-.auth-wrap { width: 100%; max-width: 400px; }
-
-.auth-card {
-  background: var(--card);
-  border: 1px solid var(--border-strong);
-  border-radius: 18px;
-  padding: 36px;
-  position: relative; overflow: hidden;
-  animation: fadeUp 0.5s ease both;
-}
-.auth-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 120px;
-  background: radial-gradient(ellipse at 50% 0%, rgba(56,189,248,0.06) 0%, transparent 80%);
-  pointer-events: none;
-}
-
-@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-
-.auth-header { margin-bottom: 28px; }
-.auth-logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-.auth-logo-row img { width: 32px; height: 32px; border-radius: 8px; }
-.auth-logo-row span { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
-.auth-logo-row em { color: var(--blue); font-style: normal; }
-
-.auth-title { font-size: 22px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 6px; }
-.auth-sub { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-
-.form-row { margin-bottom: 16px; }
-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 7px; }
-
-input[type="email"], input[type="password"] {
-  width: 100%; background: rgba(56,189,248,0.04);
-  border: 1px solid var(--border-strong); border-radius: 9px;
-  padding: 11px 14px; font-size: 14px; color: var(--text);
-  font-family: var(--sans); outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-input:focus { border-color: var(--blue-border); box-shadow: 0 0 0 3px rgba(56,189,248,0.08); }
-input::placeholder { color: rgba(255,255,255,0.2); }
-
-.error-banner {
-  display: none; padding: 11px 14px;
-  background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.25);
-  border-radius: 9px; font-size: 13px; color: #fca5a5;
-  margin-bottom: 16px; line-height: 1.5;
-}
-
-.form-sep { height: 1px; background: var(--border); margin: 20px 0; }
-
-.btn-submit {
-  width: 100%; padding: 13px;
-  background: var(--blue); border: none; border-radius: 9px;
-  color: #050810; font-size: 14px; font-weight: 700;
-  font-family: var(--sans); cursor: pointer; transition: all 0.2s;
-  box-shadow: 0 0 20px rgba(56,189,248,0.22);
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.btn-submit:hover { opacity: 0.88; box-shadow: 0 0 30px rgba(56,189,248,0.38); }
-.btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.remember-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 20px;
-}
-.remember-check { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted); }
-.remember-check input[type="checkbox"] { display: none; }
-.custom-check {
-  width: 17px; height: 17px;
-  border: 1px solid var(--border-strong); border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 0.2s; background: transparent; flex-shrink: 0;
-}
-.remember-check input:checked ~ .custom-check { background: var(--blue); border-color: var(--blue); }
-.checkmark { display: none; color: #050810; font-size: 10px; font-weight: 700; }
-.remember-check input:checked ~ .custom-check .checkmark { display: block; }
-
-.forgot-link { font-size: 12px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
-.forgot-link:hover { color: var(--blue); }
-
-.auth-footer { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-muted); }
-.auth-footer a { color: var(--blue); text-decoration: none; }
-.auth-footer a:hover { text-decoration: underline; }
-
-.spinner { width: 16px; height: 16px; border: 2px solid rgba(5,8,16,0.3); border-top-color: #050810; border-radius: 50%; animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.page-footer { text-align: center; padding: 20px; font-size: 12px; color: var(--text-muted); position: relative; z-index: 1; }
+.card{background:var(--card);border:1px solid var(--border-strong);border-radius:18px;padding:36px;position:relative;overflow:hidden;animation:fadeUp .5s ease both}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:120px;background:radial-gradient(ellipse at 50% 0%,rgba(56,189,248,.06) 0%,transparent 80%);pointer-events:none}
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.logo-row img{width:32px;height:32px;border-radius:8px}
+.logo-row span{font-size:18px;font-weight:800;letter-spacing:-.02em}
+.logo-row em{color:var(--blue);font-style:normal}
+.card-title{font-size:22px;font-weight:800;letter-spacing:-.03em;margin-bottom:6px}
+.card-sub{font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:28px}
+.form-row{margin-bottom:16px}
+label{display:block;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+input[type=email],input[type=password]{width:100%;background:rgba(56,189,248,.04);border:1px solid var(--border-strong);border-radius:9px;padding:11px 14px;font-size:14px;color:var(--text);font-family:var(--sans);outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus{border-color:var(--blue-border);box-shadow:0 0 0 3px rgba(56,189,248,.08)}
+input::placeholder{color:rgba(255,255,255,.18)}
+.err-banner{display:none;padding:11px 14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);border-radius:9px;font-size:13px;color:#fca5a5;margin-bottom:16px}
+.remember-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.check-row{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--text-muted)}
+.check-row input{display:none}
+.cbox{width:17px;height:17px;border:1px solid var(--border-strong);border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.check-row input:checked~.cbox{background:var(--blue);border-color:var(--blue)}
+.ck{display:none;color:#050810;font-size:10px;font-weight:700}
+.check-row input:checked~.cbox .ck{display:block}
+.forgot{font-size:12px;color:var(--text-muted);text-decoration:none;transition:color .2s}
+.forgot:hover{color:var(--blue)}
+.submit-btn{width:100%;padding:13px;background:var(--blue);border:none;border-radius:9px;color:#050810;font-size:14px;font-weight:700;font-family:var(--sans);cursor:pointer;transition:all .2s;box-shadow:0 0 20px rgba(56,189,248,.22);display:flex;align-items:center;justify-content:center;gap:8px}
+.submit-btn:hover{opacity:.88}
+.submit-btn:disabled{opacity:.4;cursor:not-allowed}
+.spinner{width:16px;height:16px;border:2px solid rgba(5,8,16,.3);border-top-color:#050810;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer-link{text-align:center;margin-top:20px;font-size:13px;color:var(--text-muted);animation:fadeUp .5s .1s ease both}
+.footer-link a{color:var(--blue);text-decoration:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.page-footer{text-align:center;padding:20px;font-size:12px;color:var(--text-muted);position:relative;z-index:1}
 </style>
 </head>
 <body>
-<div class="bg-grid"></div>
-<div class="bg-glow"></div>
-
+<div class="bg-grid"></div><div class="bg-glow"></div>
 <nav>
   <a href="index.html" class="nav-logo">
-    <img src="https://media.discordapp.net/attachments/1387034677688406090/1482459262134255757/LeakHub_Logo.png?ex=69b70746&is=69b5b5c6&hm=edc2f3c5b8e6b2d955d665c7490c906f5b121790db661d278c19854b9096c6eb&=&format=webp&quality=lossless&width=350&height=350" alt="LeakHub">
+    <img src="https://media.discordapp.net/attachments/1387034677688406090/1482459262134255757/LeakHub_Logo.png?ex=69b70746&is=69b5b5c6&hm=edc2f3c5b8e6b2d955d665c7490c906f5b121790db661d278c19854b9096c6eb&=&format=webp&quality=lossless&width=350&height=350" alt="">
     <span class="nav-logo-text">Leak<em>Hub</em></span>
   </a>
   <a href="register.html" class="nav-link">Créer un compte →</a>
 </nav>
-
 <main>
-  <div class="auth-wrap">
-    <div class="auth-card">
-      <div class="auth-header">
-        <div class="auth-logo-row">
-          <img src="https://media.discordapp.net/attachments/1387034677688406090/1482459262134255757/LeakHub_Logo.png?ex=69b70746&is=69b5b5c6&hm=edc2f3c5b8e6b2d955d665c7490c906f5b121790db661d278c19854b9096c6eb&=&format=webp&quality=lossless&width=350&height=350" alt="">
-          <span>Leak<em>Hub</em></span>
-        </div>
-        <div class="auth-title">Connexion</div>
-        <div class="auth-sub">Accédez à votre espace de recherche.</div>
+  <div class="wrap">
+    <div class="success-banner" id="successBanner">
+      <span>✓</span>
+      <span>Compte créé avec succès. Connectez-vous pour accéder à la plateforme.</span>
+    </div>
+    <div class="card">
+      <div class="logo-row">
+        <img src="https://media.discordapp.net/attachments/1387034677688406090/1482459262134255757/LeakHub_Logo.png?ex=69b70746&is=69b5b5c6&hm=edc2f3c5b8e6b2d955d665c7490c906f5b121790db661d278c19854b9096c6eb&=&format=webp&quality=lossless&width=350&height=350" alt="">
+        <span>Leak<em>Hub</em></span>
       </div>
-
-      <div class="error-banner" id="errorBanner"></div>
-
+      <div class="card-title">Connexion</div>
+      <div class="card-sub">Accédez à votre espace de recherche.</div>
+      <div class="err-banner" id="errBanner"></div>
       <div class="form-row">
         <label>Adresse email</label>
         <input type="email" id="email" placeholder="jean@exemple.com" autocomplete="email" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
-
       <div class="form-row">
         <label>Mot de passe</label>
         <input type="password" id="password" placeholder="Votre mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
-
       <div class="remember-row">
-        <label class="remember-check">
-          <input type="checkbox" id="rememberMe" checked>
-          <span class="custom-check"><span class="checkmark">✓</span></span>
+        <label class="check-row">
+          <input type="checkbox" id="remember" checked>
+          <span class="cbox"><span class="ck">✓</span></span>
           Se souvenir de moi
         </label>
-        <a href="#" class="forgot-link">Mot de passe oublié</a>
+        <a href="#" class="forgot">Mot de passe oublié</a>
       </div>
-
-      <button class="btn-submit" id="loginBtn" onclick="doLogin()">
-        Se connecter →
-      </button>
-
-      <div class="auth-footer">
-        Pas encore de compte ? <a href="register.html">Créer un compte</a>
-      </div>
+      <button class="submit-btn" id="loginBtn" onclick="doLogin()">Se connecter →</button>
+      <div class="footer-link">Pas encore de compte ? <a href="register.html">Créer un compte</a></div>
     </div>
   </div>
 </main>
-
 <div class="page-footer">© 2025 LeakHub — OSINT Platform</div>
-
 <script>
 // Auto-redirect if already logged in
-const session = JSON.parse(localStorage.getItem('lh_session') || 'null');
-if (session && session.email) {
-  window.location.href = 'dashboard.html';
+(function(){
+  const s=JSON.parse(localStorage.getItem('lh_session')||sessionStorage.getItem('lh_session')||'null');
+  if(s&&s.email) window.location.href='dashboard.html';
+})();
+
+// Show success banner if coming from register
+if(new URLSearchParams(window.location.search).get('registered')==='1'){
+  document.getElementById('successBanner').style.display='flex';
 }
 
-// Pre-fill if remembered
-const remembered = localStorage.getItem('lh_remember_email');
-if (remembered) {
-  document.getElementById('email').value = remembered;
-}
+// Pre-fill remembered email
+const remembered=localStorage.getItem('lh_remember_email');
+if(remembered) document.getElementById('email').value=remembered;
 
-function showError(msg) {
-  const b = document.getElementById('errorBanner');
-  b.textContent = msg;
-  b.style.display = 'block';
-}
+function showErr(msg){const b=document.getElementById('errBanner');b.textContent=msg;b.style.display='block';}
+function hideErr(){document.getElementById('errBanner').style.display='none';}
 
-function hideError() {
-  document.getElementById('errorBanner').style.display = 'none';
-}
+async function doLogin(){
+  hideErr();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const remember=document.getElementById('remember').checked;
+  if(!email){showErr('Veuillez entrer votre adresse email.');return;}
+  if(!password){showErr('Veuillez entrer votre mot de passe.');return;}
 
-async function doLogin() {
-  hideError();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const remember = document.getElementById('rememberMe').checked;
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner"></div> Connexion...';
 
-  if (!email) { showError('Veuillez entrer votre adresse email.'); return; }
-  if (!password) { showError('Veuillez entrer votre mot de passe.'); return; }
+  await new Promise(r=>setTimeout(r,800));
 
-  const btn = document.getElementById('loginBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Connexion...';
+  const accounts=JSON.parse(localStorage.getItem('lh_accounts')||'[]');
+  const account=accounts.find(a=>a.email===email&&a.password===password);
 
-  await new Promise(r => setTimeout(r, 900));
-
-  // Load accounts from localStorage
-  const accounts = JSON.parse(localStorage.getItem('lh_accounts') || '[]');
-  const account = accounts.find(a => a.email === email && a.password === password);
-
-  if (!account) {
-    btn.disabled = false;
-    btn.innerHTML = 'Se connecter →';
-    showError('Email ou mot de passe incorrect.');
+  if(!account){
+    btn.disabled=false;
+    btn.innerHTML='Se connecter →';
+    showErr('Email ou mot de passe incorrect.');
     return;
   }
 
-  // Save session
-  const sessionData = {
-    email: account.email,
-    firstName: account.firstName,
-    lastName: account.lastName,
-    plan: account.plan,
-    createdAt: account.createdAt,
-    loginAt: Date.now()
+  // Build session — plan from account (always 'free' unless admin updated it)
+  const sessionData={
+    email:account.email,
+    firstName:account.firstName,
+    lastName:account.lastName,
+    plan:account.plan||'free',
+    intendedPlan:account.intendedPlan||'free',
+    loginAt:Date.now()
   };
 
-  // Session duration: 30 days if "remember me", else session only
-  if (remember) {
-    localStorage.setItem('lh_session', JSON.stringify(sessionData));
-    localStorage.setItem('lh_remember_email', email);
+  if(remember){
+    localStorage.setItem('lh_session',JSON.stringify(sessionData));
+    localStorage.setItem('lh_remember_email',email);
   } else {
-    sessionStorage.setItem('lh_session', JSON.stringify(sessionData));
+    sessionStorage.setItem('lh_session',JSON.stringify(sessionData));
     localStorage.removeItem('lh_remember_email');
   }
 
-  btn.innerHTML = '✓ Connecté';
-
-  setTimeout(() => {
-    window.location.href = 'dashboard.html';
-  }, 500);
+  btn.innerHTML='✓ Connecté';
+  setTimeout(()=>{ window.location.href='dashboard.html'; },500);
 }
 </script>
 </body>
